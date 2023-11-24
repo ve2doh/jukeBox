@@ -22,6 +22,7 @@ char hexaKeys[ROWS][COLS] = {
 static bool do_echo = true;
 unsigned int playlist[PLAY_LIST_LENGTH];
 int currentSong = 0;
+int currentEq = 0;
 int lastSong = 0;
 int keypadNumberBuffer=0;
 
@@ -38,6 +39,8 @@ void addSong(int songNumber);
 void startNextSong();
 void monitorPlayList();
 void monitorKeyPad();
+void setEqUp();
+void setEqDown();
 
 // Initialise on software serial port.
 SoftwareSerial SoftSerial(SoftRx, SoftTx);
@@ -191,6 +194,27 @@ void addSong(int songNumber){
       Serial.println(lastSong);  
 }
 
+void setEqUp() {
+  if(currentEq<4) {
+    player.setEq(static_cast<DY::eq_t>(++currentEq));
+    Serial.print("Eq set to: ");
+    Serial.println(currentEq);
+  } else {
+      Serial.println("currently on last eq value");
+  }
+}
+
+void setEqDown(){
+  if(currentEq>0) {
+    player.setEq(static_cast<DY::eq_t>(--currentEq));
+    Serial.print("Eq set to: ");
+    Serial.println(currentEq);
+  } else {
+      Serial.println("currently on first eq value");
+  }
+}
+
+
 void monitorPlayList(){
  DY::play_state_t playState = player.checkPlayState();
  bool song2Play =  currentSong!=lastSong;
@@ -217,6 +241,10 @@ void monitorKeyPad(){
   } else if (customKey=='e'){
     addSong(keypadNumberBuffer);
     keypadNumberBuffer=0;
+  } else if (customKey=='u') {
+    setEqUp();
+  } else if (customKey=='d') {
+    setEqDown();
   }
   
   if (customKey){

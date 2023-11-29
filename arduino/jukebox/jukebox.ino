@@ -23,6 +23,7 @@ static bool do_echo = true;
 unsigned int playlist[PLAY_LIST_LENGTH];
 int currentSong = 0;
 int currentEq = 0;
+int currentVol = 5;
 int lastSong = 0;
 int keypadNumberBuffer=0;
 
@@ -41,6 +42,8 @@ void monitorPlayList();
 void monitorKeyPad();
 void setEqUp();
 void setEqDown();
+void setVolUp();
+void setVolDown();
 
 // Initialise on software serial port.
 SoftwareSerial SoftSerial(SoftRx, SoftTx);
@@ -53,7 +56,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
 
-  player.setVolume(30); // 100% Volume
+  player.setVolume(currentVol);
 }
 
 void loop() {
@@ -214,6 +217,27 @@ void setEqDown(){
   }
 }
 
+void setVolUp() {
+  if(currentEq<30) {
+    player.setVolume(++currentVol);
+    Serial.print("volume set to: ");
+    Serial.println(currentVol);
+  } else {
+      Serial.println("currently on maximum volume");
+  }
+}
+
+void setVolDown(){
+  if(currentEq>1) {
+    player.setVolume(--currentVol);
+    Serial.print("Eq set to: ");
+    Serial.println(currentEq);
+  } else {
+      Serial.println("currently on minimum volume");
+  }
+}
+
+
 
 void monitorPlayList(){
  DY::play_state_t playState = player.checkPlayState();
@@ -242,9 +266,13 @@ void monitorKeyPad(){
     addSong(keypadNumberBuffer);
     keypadNumberBuffer=0;
   } else if (customKey=='u') {
-    setEqUp();
+    setVolUp();
   } else if (customKey=='d') {
+    setVolDown();
+  } else if (customKey=='l') {
     setEqDown();
+  } else if (customKey=='r') {
+    setEqUp();
   }
   
   if (customKey){

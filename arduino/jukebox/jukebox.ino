@@ -218,7 +218,7 @@ void setEqDown(){
 }
 
 void setVolUp() {
-  if(currentEq<30) {
+  if(currentVol<30) {
     player.setVolume(++currentVol);
     Serial.print("volume set to: ");
     Serial.println(currentVol);
@@ -228,10 +228,10 @@ void setVolUp() {
 }
 
 void setVolDown(){
-  if(currentEq>1) {
+  if(currentVol>1) {
     player.setVolume(--currentVol);
-    Serial.print("Eq set to: ");
-    Serial.println(currentEq);
+    Serial.print("volume set to: ");
+    Serial.println(currentVol);
   } else {
       Serial.println("currently on minimum volume");
   }

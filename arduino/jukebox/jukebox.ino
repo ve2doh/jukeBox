@@ -1,10 +1,20 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 #include <DYPlayerArduino.h>
+#include <Keypad.h>
 
 const int SoftRx = 10;
 const int SoftTx = 11;
-const int busyPin = 9;
+
+const byte ROWS = 5; //four rows
+const byte COLS = 4; //four columns
+char hexaKeys[ROWS][COLS] = {
+  {'h','g','#','*'},
+  {'1','2','3','u'},
+  {'4','5','6','d'},
+  {'7','8','9','s'},
+  {'l','0','r','e'}
+};
 
 #define BUF_LENGTH 128
 #define PLAY_LIST_LENGTH 100
@@ -12,7 +22,16 @@ const int busyPin = 9;
 static bool do_echo = true;
 unsigned int playlist[PLAY_LIST_LENGTH];
 int currentSong = 0;
+int currentEq = 0;
+int currentVol = 5;
 int lastSong = 0;
+int keypadNumberBuffer=0;
+
+byte rowPins[ROWS] = {2, 3, 4, 5, 6}; //connect to the row pinouts of the keypad
+byte colPins[COLS] = {12 , 9, 8, 7}; //connect to the column pinouts of the keypad
+
+//initialize an instance of class NewKeypad
+Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
 
 void readAndExecuteCommand();
 void exec(char *cmdline);
@@ -20,6 +39,11 @@ void status();
 void addSong(int songNumber);
 void startNextSong();
 void monitorPlayList();
+void monitorKeyPad();
+void setEqUp();
+void setEqDown();
+void setVolUp();
+void setVolDown();
 
 // Initialise on software serial port.
 SoftwareSerial SoftSerial(SoftRx, SoftTx);
@@ -29,23 +53,22 @@ void setup() {
   player.begin();
   Serial.begin(9600);
 
-  pinMode(busyPin, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
 
-  player.setVolume(30); // 50% Volume
+  player.setVolume(currentVol);
 }
 
 void loop() {
   readAndExecuteCommand();
   monitorPlayList();
-
+  monitorKeyPad();
   if(player.checkPlayState()==DY::PlayState::Playing)
     digitalWrite(LED_BUILTIN, HIGH);
   else
     digitalWrite(LED_BUILTIN, LOW);
 
-  delay(500);
+  delay(125);
   
 }
 
@@ -53,8 +76,8 @@ void readAndExecuteCommand(){
     while (Serial.available()) {
         static char buffer[BUF_LENGTH];
         static int length = 0;
-
         int data = Serial.read();
+
         if (data == '\b' || data == '\177') {  // BS and DEL
             if (length) {
                 length--;
@@ -126,10 +149,7 @@ void status(){
   
   Serial.print("Playing sound: ");
   Serial.println((int16_t)player.getPlayingSound());
-
-  Serial.print("busy status: ");
-  Serial.println((int16_t)digitalRead(busyPin));
-
+  
   Serial.println("play list status: ");
   
   Serial.print("current song: ");
@@ -141,10 +161,11 @@ void status(){
   
   Serial.print("  ");
   for(int incr=0; incr<PLAY_LIST_LENGTH ;incr++) {
-    if(incr==currentSong) Serial.print("C");
-    if(incr==lastSong) Serial.print("L");
+    if(incr%10==0 && incr>0) Serial.println("");
+    if(incr==currentSong) Serial.print("C"); 
+    if(incr==lastSong) Serial.print("L"); 
     Serial.print((int16_t)playlist[incr]);
-    Serial.print("   ");
+    Serial.print("  ");
   }
   Serial.println("");
   
@@ -176,8 +197,86 @@ void addSong(int songNumber){
       Serial.println(lastSong);  
 }
 
+void setEqUp() {
+  if(currentEq<4) {
+    player.setEq(static_cast<DY::eq_t>(++currentEq));
+    Serial.print("Eq set to: ");
+    Serial.println(currentEq);
+  } else {
+      Serial.println("currently on last eq value");
+  }
+}
+
+void setEqDown(){
+  if(currentEq>0) {
+    player.setEq(static_cast<DY::eq_t>(--currentEq));
+    Serial.print("Eq set to: ");
+    Serial.println(currentEq);
+  } else {
+      Serial.println("currently on first eq value");
+  }
+}
+
+void setVolUp() {
+  if(currentEq<30) {
+    player.setVolume(++currentVol);
+    Serial.print("volume set to: ");
+    Serial.println(currentVol);
+  } else {
+      Serial.println("currently on maximum volume");
+  }
+}
+
+void setVolDown(){
+  if(currentEq>1) {
+    player.setVolume(--currentVol);
+    Serial.print("Eq set to: ");
+    Serial.println(currentEq);
+  } else {
+      Serial.println("currently on minimum volume");
+  }
+}
+
+
+
 void monitorPlayList(){
  DY::play_state_t playState = player.checkPlayState();
  bool song2Play =  currentSong!=lastSong;
  if(playState!=DY::PlayState::Playing && song2Play) startNextSong();
 }
+
+void monitorKeyPad(){
+  char customKey = customKeypad.getKey();
+
+  if (customKey=='0'
+      || customKey=='1'
+      || customKey=='2'
+      || customKey=='3'
+      || customKey=='4'
+      || customKey=='5'
+      || customKey=='6'
+      || customKey=='7'
+      || customKey=='8'
+      || customKey=='9') {
+    keypadNumberBuffer=keypadNumberBuffer*10+(customKey-'0');
+      Serial.print("keypadNumberBuffer: ");
+      Serial.println(keypadNumberBuffer);  
+
+  } else if (customKey=='e'){
+    addSong(keypadNumberBuffer);
+    keypadNumberBuffer=0;
+  } else if (customKey=='u') {
+    setVolUp();
+  } else if (customKey=='d') {
+    setVolDown();
+  } else if (customKey=='l') {
+    setEqDown();
+  } else if (customKey=='r') {
+    setEqUp();
+  }
+  
+  if (customKey){
+      Serial.print("customKey: ");
+      Serial.println(atoi(customKey));  
+  }
+ }

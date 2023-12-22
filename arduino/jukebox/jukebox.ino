@@ -63,13 +63,14 @@ void loop() {
   readAndExecuteCommand();
   monitorPlayList();
   monitorKeyPad();
+
   if(player.checkPlayState()==DY::PlayState::Playing)
     digitalWrite(LED_BUILTIN, HIGH);
   else
     digitalWrite(LED_BUILTIN, LOW);
 
   delay(125);
-  
+
 }
 
 void readAndExecuteCommand(){
@@ -273,10 +274,12 @@ void monitorKeyPad(){
     setEqDown();
   } else if (customKey=='r') {
     setEqUp();
+  } else if (customKey=='g') {
+    status();
   }
   
   if (customKey){
       Serial.print("customKey: ");
-      Serial.println(atoi(customKey));  
+      Serial.println(customKey);  
   }
  }

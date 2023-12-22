@@ -1,8 +1,8 @@
 $fn=100;
 cadreLargeur=12;
 cadreEpaisseur=6;
-keypadLargeur=77;
-keypadHauteur=65;
+keypadLargeur=85;
+keypadHauteur=73;
 ancrageDiametre = 4.3;
 ancragelongueur = 5;
 bordR1 = 3;
@@ -10,14 +10,34 @@ bordR2 = 24;
 longueurBordureLongue = keypadLargeur+2*cadreLargeur;
 longueurBordureCourte = keypadHauteur+2*cadreLargeur;
 
-difference(){
-    cube([keypadLargeur+2*cadreLargeur,
-        keypadHauteur+2*cadreLargeur,cadreEpaisseur],true);
-    cube([keypadLargeur,keypadHauteur,cadreEpaisseur+2],true);
-    
 
-    ancrages();
-    bordures();
+cadre();
+//gabaritPercage();
+
+module gabaritPercage(){
+    difference(){
+        cadre();
+        translate([0,0,3])
+        cube([longueurBordureLongue+2,longueurBordureCourte+2,10],true);
+
+    translate([-keypadLargeur/2+4,keypadHauteur/2-0.1,-10])
+    cube([25,5,10]);
+
+    cube([keypadLargeur+1,keypadHauteur+1,300],true);
+    }
+
+}
+
+module cadre() {
+    difference(){
+        cube([keypadLargeur+2*cadreLargeur,
+            keypadHauteur+2*cadreLargeur,cadreEpaisseur],true);
+        cube([keypadLargeur-5,keypadHauteur-5,cadreEpaisseur+2],true);
+        
+
+        ancrages();
+        bordures();
+    }
 }
 
 module ancrages(){
